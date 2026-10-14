@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>نظام أعطال الأجهزة</title>
+<style>
+:root{
+  color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#ffffff;--card:#fff;--text:#1d2530;--muted:#6b7480;--line:#d9e4f5;--accent:#1d63e0;--accent-t:#fff;
+  --teal:#0284c7;--teal-bg:#e0f2fe;--blue-bg:#e8f0fd;
+  --new:#d9480f;--new-bg:#fff0e6;--prog:#1c7ed6;--prog-bg:#e7f1fd;--done:#2b8a3e;--done-bg:#e6f6ea;--danger:#c92a2a;--danger-bg:#fdecec;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f1724;--card:#17233a;--text:#e8ecf1;--muted:#98a2b0;--line:#25344d;--accent:#5aa2ff;--accent-t:#0b1320;
+  --teal:#7dd3fc;--teal-bg:#0c2a40;--blue-bg:#16283f;
+  --new:#ff922b;--new-bg:#3a2412;--prog:#74b0ff;--prog-bg:#16283f;--done:#69db7c;--done-bg:#15301c;--danger:#ff8787;--danger-bg:#3a1a1a;
+}
+.tbtn{border:1px solid var(--line);background:var(--card);color:var(--text);width:40px;height:40px;border-radius:50%;font-size:18px;line-height:1;padding:0;cursor:pointer}
+#login .tbtn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px}
+.ubr{display:flex;gap:6px;align-items:center}
+.userbar .tbtn{width:34px;height:34px;font-size:16px;color:var(--text);padding:0;border-radius:50%}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",Arial,sans-serif;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 2px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(29,99,224,.07)}
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 5px}
+label:first-of-type{margin-top:0}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;font-size:16px}
+textarea{min-height:90px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;margin-top:16px;padding:13px;border:0;border-radius:10px;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+.btn:disabled{opacity:.5}
+.btn.blue{background:var(--accent);color:var(--accent-t)}
+.btn.teal{background:var(--teal);color:var(--accent-t)}
+.msg{padding:10px 12px;border-radius:10px;margin-top:12px;font-size:14px;display:none}
+.msg.ok{background:var(--done-bg);color:var(--done)}
+.msg.err{background:var(--danger-bg);color:var(--danger)}
+
+/* mode switch (staff only) */
+.modes{display:none;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:14px}
+.modes button{flex:1;border:0;background:transparent;color:var(--muted);padding:10px;border-radius:9px;font:inherit;font-weight:700;cursor:pointer}
+.modes button.on{background:var(--accent);color:var(--accent-t)}
+
+/* report program */
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.role{border:2px solid var(--line);background:var(--card);color:var(--text);border-radius:18px;padding:26px 10px;font:inherit;cursor:pointer;text-align:center}
+.role .ic{font-size:44px;display:block;margin-bottom:6px}
+.role b{font-size:18px;display:block}
+.role span{font-size:12px;color:var(--muted)}
+.role.t{border-color:var(--accent);background:var(--blue-bg)}
+.role.s{border-color:var(--teal);background:var(--teal-bg)}
+.back{border:0;background:transparent;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;padding:4px 0;margin-bottom:6px}
+.fhead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;margin-bottom:12px;font-weight:700}
+.fhead.t{background:var(--blue-bg);color:var(--accent)}
+.fhead.s{background:var(--teal-bg);color:var(--teal)}
+.fhead .ic{font-size:26px}
+
+/* fix program */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:12px;color:var(--muted)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.filters button{border:1px solid var(--line);background:var(--card);color:var(--text);padding:7px 12px;border-radius:99px;font:inherit;font-size:13px;cursor:pointer}
+.filters button.on{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.loc{font-weight:700}
+.pc{font-size:13px;color:var(--muted)}
+.badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.s-new{background:var(--new-bg);color:var(--new)}
+.s-prog{background:var(--prog-bg);color:var(--prog)}
+.s-done{background:var(--done-bg);color:var(--done)}
+.s-unsolved{background:var(--danger-bg);color:var(--danger)}
+.stline.unsolved{color:var(--danger)}
+.acts .bad{color:var(--danger);border-color:var(--danger)}
+.type{display:inline-block;font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;margin:8px 0 4px}
+.who{display:inline-block;font-size:12px;border-radius:6px;padding:2px 8px;margin:8px 0 4px 4px;font-weight:700}
+.who.t{background:var(--blue-bg);color:var(--accent)}
+.who.s{background:var(--teal-bg);color:var(--teal)}
+.urgent{color:var(--danger);font-weight:700;font-size:12px;margin-inline-start:6px}
+.desc{margin:6px 0;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.meta{font-size:12px;color:var(--muted)}
+.fixnote{margin-top:8px;font-size:13px;background:var(--done-bg);color:var(--done);padding:8px 10px;border-radius:8px;white-space:pre-wrap;word-break:break-word}
+.notein{margin-top:10px;min-height:56px;font-size:14px}
+.acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.acts button{flex:1;min-width:90px;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit;font-size:13px;cursor:pointer}
+.acts .go{background:var(--done);color:var(--accent-t);border-color:var(--done);font-weight:700}
+.acts .del{color:var(--danger)}
+.acts .del.sure{background:var(--danger);color:#fff;border-color:var(--danger)}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.note{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
+.thanks{text-align:center;padding:28px 16px}
+.thanks .big{font-size:56px;line-height:1.1}
+.thanks h2{margin:10px 0 6px;font-size:22px}
+.thanks p{color:var(--muted);margin:0 0 6px;font-size:14px}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);margin-top:10px}
+.mybtn{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);font:inherit;font-weight:600;cursor:pointer}
+.stline{margin-top:8px;font-size:13px;font-weight:700}
+.stline.new{color:var(--new)}
+.stline.prog{color:var(--prog)}
+.stline.done{color:var(--done)}
+
+/* splash */
+#splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:20px;color:#fff;background:linear-gradient(135deg,#1d63e0 0%,#4aa3ff 100%);background-size:200% 200%;animation:bgmove 6s ease infinite;transition:opacity .7s ease,visibility .7s ease;cursor:pointer}
+#splash.hide{opacity:0;visibility:hidden}
+.sp-inner{position:relative;z-index:2}
+.sp-logo{font-size:70px;line-height:1;display:inline-block;animation:pop .9s cubic-bezier(.2,1.5,.4,1) both,floaty 3s ease-in-out .9s infinite}
+.sp-hi{font-size:24px;font-weight:600;margin-top:14px;opacity:0;animation:rise .8s ease .5s forwards}
+.sp-name{font-size:64px;font-weight:800;line-height:1.2;margin-top:4px;opacity:0;animation:rise .9s cubic-bezier(.2,.9,.3,1.2) 1s forwards}
+.sp-name span{background:linear-gradient(90deg,#fff 0%,#e6f1ff 40%,#fff 80%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:shine 2.4s linear 1.6s infinite}
+.sp-line{height:4px;width:0;margin:10px auto 0;border-radius:4px;background:#fff;opacity:.9;animation:grow .9s ease 1.5s forwards}
+.sp-tip{margin-top:26px;font-size:13px;opacity:0;animation:fadein .8s ease 2.2s forwards}
+.bub{position:absolute;border-radius:50%;background:rgba(255,255,255,.14);animation:drift 7s ease-in-out infinite}
+.bub.b1{width:180px;height:180px;top:-50px;right:-40px}
+.bub.b2{width:120px;height:120px;bottom:12%;left:-30px;animation-delay:-2s}
+.bub.b3{width:80px;height:80px;top:28%;left:18%;animation-delay:-4s}
+.bub.b4{width:140px;height:140px;bottom:-40px;right:12%;animation-delay:-1s}
+@keyframes pop{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes rise{0%{opacity:0;transform:translateY(24px);filter:blur(6px)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}
+@keyframes grow{to{width:140px}}
+@keyframes shine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes fadein{to{opacity:.85}}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(14px,-22px) scale(1.08)}}
+@keyframes bgmove{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@media (prefers-reduced-motion:reduce){#splash,.sp-logo,.sp-hi,.sp-name,.sp-name span,.sp-line,.sp-tip,.bub{animation:none!important}.sp-hi,.sp-name{opacity:1}.sp-line{width:140px}.sp-tip{opacity:.85}}
+
+/* login */
+#login{position:fixed;inset:0;z-index:9000;overflow:auto;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 24px) 16px 24px}
+.lg-card{width:100%;max-width:420px;margin-top:6vh}
+.lg-ic{font-size:46px;text-align:center;line-height:1}
+.lg-card h2{text-align:center;margin:8px 0 2px;font-size:22px}
+.lg-card .sub{text-align:center}
+.lg-hint{font-size:12px;color:var(--muted);margin-top:6px}
+.userbar{display:none;align-items:center;justify-content:space-between;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:14px}
+.userbar button{border:1px solid var(--line);background:var(--bg);color:var(--danger);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="splash" role="dialog" aria-label="مرحباً">
+  <div class="bub b1"></div><div class="bub b2"></div><div class="bub b3"></div><div class="bub b4"></div>
+  <div class="sp-inner">
+    <div class="sp-logo">🖥️</div>
+    <div class="sp-hi">مرحبًا بك في</div>
+    <div class="sp-name"><span>مساهم</span></div>
+    <div class="sp-line"></div>
+    <div class="sp-tip">اضغط للمتابعة</div>
+  </div>
+</div>
+<div id="login">
+  <button class="tbtn" aria-label="تبديل الوضع بين الداكن والأبيض">🌙</button>
+  <div class="lg-card">
+    <div class="lg-ic">🔐</div>
+    <h2>تسجيل الدخول</h2>
+    <p class="sub">بلاغاتك خاصة بك ولا يراها غيرك</p>
+    <div class="card">
+      <label for="lg-name">الاسم الثنائي</label>
+      <input id="lg-name" placeholder="اكتب اسمك الثنائي" autocomplete="name">
+      <div class="lg-hint">اكتب اسمك الأول واسم العائلة</div>
+      <div class="msg err" id="lg-err"></div>
+      <button class="btn blue" id="lg-go">دخول</button>
+      <button class="btn ghost" id="lg-admin" style="display:none">🛠️ دخول كمسؤول (الدعم الفني)</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+
+  <div class="userbar" id="userbar"><span>👤 <b id="ub-name"></b></span><span class="ubr"><button class="tbtn" aria-label="تبديل الوضع بين الداكن والأبيض">🌙</button><button id="ub-out">تسجيل الخروج</button></span></div>
+
+  <div class="modes" id="modes">
+    <button id="m-report" class="on">📝 برنامج الإبلاغ</button>
+    <button id="m-fix">🛠️ برنامج الحل</button>
+  </div>
+
+  <!-- ================= برنامج الإبلاغ ================= -->
+  <div id="p-report">
+    <h1>🖥️ الإبلاغ عن أعطال الأجهزة</h1>
+
+    <section id="r-home">
+      <p class="sub">اختر نوع المستخدم لتسجيل بلاغ جديد</p>
+      <div class="roles">
+        <button class="role t" id="go-t"><span class="ic">👨‍🏫</span><b>مدرس</b><span>بلاغ عن جهاز مدرس</span></button>
+        <button class="role s" id="go-s"><span class="ic">🎓</span><b>طالب</b><span>بلاغ عن جهاز طالب</span></button>
+      </div>
+      <button class="mybtn" id="go-mine">📋 بلاغاتي <span id="my-cnt"></span></button>
+      <div class="note" id="mode1"></div>
+    </section>
+
+    <section id="r-t" style="display:none">
+      <button class="back" data-back>→ رجوع</button>
+      <div class="fhead t"><span class="ic">👨‍🏫</span>بلاغ جهاز مدرس</div>
+      <div class="card">
+        <label for="t-name">اسم المدرس</label>
+        <input id="t-name" placeholder="الاسم" autocomplete="name">
+        <div class="row">
+          <div><label for="t-dept">القسم</label><input id="t-dept" placeholder="مثال: الحاسب"></div>
+          <div><label for="t-hall">القاعة</label><input id="t-hall" placeholder="مثال: 204"></div>
+        </div>
+        <label for="t-pc">مكان الجهاز</label>
+        <input id="t-pc" placeholder="صف مكان الجهاز، مثال: مكتب المدرس بجانب السبورة">
+        <div class="row">
+          <div><label for="t-type">نوع المشكلة</label><select id="t-type"></select></div>
+          <div><label for="t-prio">الأهمية</label>
+            <select id="t-prio"><option value="normal">عادية</option><option value="urgent">عاجلة</option></select></div>
+        </div>
+        <label for="t-desc">وصف المشكلة</label>
+        <textarea id="t-desc" placeholder="اشرح ماذا يحدث بالضبط، ورسالة الخطأ إن وجدت"></textarea>
+        <button class="btn blue" id="t-send">إرسال البلاغ</button>
+        <div class="msg ok" id="t-ok">✅ تم إرسال البلاغ بنجاح</div>
+        <div class="msg err" id="t-err"></div>
+      </div>
+    </section>
+
+    <section id="r-s" style="display:none">
+      <button class="back" data-back>→ رجوع</button>
+      <div class="fhead s"><span class="ic">🎓</span>بلاغ جهاز طالب</div>
+      <div class="card">
+        <label for="s-name">اسم الطالب</label>
+        <input id="s-name" placeholder="الاسم" autocomplete="name">
+        <label for="s-dept">القسم</label>
+        <input id="s-dept" placeholder="مثال: الحاسب">
+        <label for="s-hall">القاعة</label>
+        <input id="s-hall" placeholder="مثال: 204">
+        <label for="s-pc">مكان الجهاز</label>
+        <input id="s-pc" placeholder="صف مكان الجهاز، مثال: الصف الثالث بجانب النافذة">
+        <label for="s-type">نوع المشكلة</label>
+        <select id="s-type"></select>
+        <label for="s-desc">وصف المشكلة</label>
+        <textarea id="s-desc" placeholder="اشرح المشكلة باختصار"></textarea>
+        <button class="btn teal" id="s-send">إرسال البلاغ</button>
+        <div class="msg ok" id="s-ok">✅ تم إرسال البلاغ بنجاح</div>
+        <div class="msg err" id="s-err"></div>
+      </div>
+    </section>
+    <section id="r-thanks" style="display:none">
+      <div class="card thanks">
+        <div class="big">🙏</div>
+        <h2>شكرًا لك<span id="th-name"></span>!</h2>
+        <p>تم استلام بلاغك، وسيتم التعامل معه في أقرب وقت.</p>
+        <p>تقدر تتابع حالته وما تم فيه من «بلاغاتي».</p>
+        <button class="btn blue" id="th-mine">📋 متابعة بلاغاتي</button>
+        <button class="btn ghost" id="th-new">إرسال بلاغ آخر</button>
+      </div>
+    </section>
+
+    <section id="r-mine" style="display:none">
+      <button class="back" data-back>→ رجوع</button>
+      <h1 style="margin-bottom:10px">📋 بلاغاتي</h1>
+      <div id="my-list"></div>
+    </section>
+  </div>
+
+  <!-- ================= برنامج الحل ================= -->
+  <div id="p-fix" style="display:none">
+    <h1>🛠️ لوحة الدعم الفني</h1>
+    <p class="sub">متابعة البلاغات وحلها</p>
+    <div class="stats">
+      <div class="stat"><b id="n-new">0</b><span>جديد</span></div>
+      <div class="stat"><b id="n-prog">0</b><span>قيد المعالجة</span></div>
+      <div class="stat"><b id="n-done">0</b><span>تم الحل</span></div>
+      <div class="stat"><b id="n-unsolved">0</b><span>تعذّر</span></div>
+    </div>
+    <div class="filters" id="filters">
+      <button data-f="all">الكل</button>
+      <button data-f="new" class="on">جديد</button>
+      <button data-f="prog">قيد المعالجة</button>
+      <button data-f="done">تم الحل</button>
+      <button data-f="unsolved">تعذّر الحل</button>
+    </div>
+    <div class="filters" id="rfilters">
+      <button data-r="all" class="on">الجميع</button>
+      <button data-r="teacher">👨‍🏫 مدرس</button>
+      <button data-r="student">🎓 طالب</button>
+    </div>
+    <input id="search" placeholder="🔍 ابحث بالقسم أو القاعة أو مكان الجهاز أو المشكلة" style="margin-bottom:12px">
+    <div class="msg err" id="fix-err"></div>
+    <div id="list"></div>
+
+    <div class="note" id="mode2"></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var STATUS = {new:"جديد", prog:"قيد المعالجة", done:"تم الحل", unsolved:"تعذّر الحل"};
+  var reports = [];
+  var filter = "new", rfilter = "all";
+  var store = null;
+  var isStaff = false;
+  var myId = "";
+  var me = null;            // logged-in account {key,name,admin}
+  var accStore = null;
+  var LS_KEY = "pc_reports_v1";
+
+  function $(id){return document.getElementById(id);}
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function flash(id, text, ms){ var el=$(id); if(text!=null) el.textContent=text; el.style.display="block"; setTimeout(function(){el.style.display="none";}, ms||3500); }
+
+  // ---------- storage ----------
+  function lsLoad(){ try{ var r = JSON.parse(localStorage.getItem(LS_KEY)||"[]"); return Array.isArray(r)?r:[]; }catch(e){ return []; } }
+  function lsSave(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(reports)); }catch(e){} }
+
+  async function addReport(r){
+    if(store){ await store.doc(r.id).set(r); }
+    else{ reports.unshift(r); lsSave(); render(); }
+  }
+  async function updateReport(id, patch){
+    try{
+      if(store){ await store.doc(id).update(patch); }
+      else{ reports = reports.map(function(x){ return x.id===id ? Object.assign({},x,patch) : x; }); lsSave(); render(); }
+    }catch(e){ console.error(e); flash("fix-err","تعذّر تحديث البلاغ"); }
+  }
+  async function removeReport(id){
+    try{
+      if(store){ await store.doc(id).delete(); }
+      else{ reports = reports.filter(function(x){return x.id!==id;}); lsSave(); render(); }
+    }catch(e){ console.error(e); flash("fix-err","تعذّر حذف البلاغ"); }
+  }
+
+  // ---------- switching programs (staff only) ----------
+  function setProgram(p){
+    if(p==="fix" && !(isStaff && me && me.admin)) p = "report";   // fix program: technician login only
+    $("p-report").style.display = p==="report" ? "" : "none";
+    $("p-fix").style.display = p==="fix" ? "" : "none";
+    $("m-report").classList.toggle("on", p==="report");
+    $("m-fix").classList.toggle("on", p==="fix");
+    if(p==="fix") render();
+    window.scrollTo(0,0);
+  }
+  $("m-report").onclick = function(){ setProgram("report"); };
+  $("m-fix").onclick = function(){ setProgram("fix"); };
+
+  // ---------- report program navigation ----------
+  function showR(v){
+    ["home","t","s","thanks","mine"].forEach(function(k){ $("r-"+k).style.display = (k===v) ? "" : "none"; });
+    if(v==="mine") renderMine();
+    window.scrollTo(0,0);
+  }
+  $("go-t").onclick = function(){showR("t");};
+  $("go-s").onclick = function(){showR("s");};
+  $("go-mine").onclick = function(){showR("mine");};
+  $("th-mine").onclick = function(){showR("mine");};
+  $("th-new").onclick = function(){showR("home");};
+  Array.prototype.forEach.call(document.querySelectorAll("[data-back]"), function(b){ b.onclick = function(){showR("home");}; });
+
+  // ---------- problem types ----------
+  var COMMON = ["الجهاز لا يعمل / لا يشتغل","بطيء أو يعلّق","الشاشة","الإنترنت / الشبكة"];
+  var REST = ["لوحة المفاتيح / الماوس","برنامج أو نظام التشغيل","تطبيق غير متوفر","أخرى"];
+  var TYPES = { teacher: COMMON.concat(["الطابعة"], REST), student: COMMON.concat(REST) };
+  function fillTypes(sel, list){ $(sel).innerHTML = list.map(function(t){return "<option>"+esc(t)+"</option>";}).join(""); }
+  fillTypes("t-type", TYPES.teacher);
+  fillTypes("s-type", TYPES.student);
+
+  // ---------- submit ----------
+  function wireSend(p, dev){
+    $(p+"-send").onclick = async function(){
+      if(!me){ flash(p+"-err","سجّل الدخول أولًا"); return; }
+      var btn = $(p+"-send");
+      var r = {
+        id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        dev: dev,
+        reporter: me ? me.name : $(p+"-name").value.trim(),
+        dept: $(p+"-dept").value.trim(),
+        hall: $(p+"-hall").value.trim(),
+        pc: $(p+"-pc").value.trim(),
+        type: $(p+"-type").value,
+        prio: p==="t" ? $("t-prio").value : "normal",
+        desc: $(p+"-desc").value.trim(),
+        status: "new",
+        uid: myId || "",
+        owner: me ? me.key : "",
+        createdAt: Date.now()
+      };
+      var err = !r.dept ? "اكتب القسم" : !r.hall ? "اكتب رقم أو اسم القاعة" : !r.pc ? "اكتب مكان الجهاز" : !r.desc ? "اكتب وصف المشكلة" : "";
+      if(err){ flash(p+"-err", err); return; }
+      btn.disabled = true;
+      try{
+        await addReport(r);
+        [p+"-hall",p+"-pc",p+"-desc"].forEach(function(k){$(k).value="";});
+        if(p==="t") $("t-prio").value="normal";
+        showThanks(r);
+      }catch(e){
+        console.error(e);
+        flash(p+"-err","تعذّر إرسال البلاغ. حاول مرة أخرى.");
+      }
+      btn.disabled = false;
+    };
+  }
+  wireSend("t","teacher");
+  wireSend("s","student");
+
+  // ---------- my reports (للمبلّغ) ----------
+  function showThanks(r){ $("th-name").textContent = r.reporter ? "، " + r.reporter : ""; showR("thanks"); }
+  function renderMine(){
+    var mine = reports.filter(function(r){ return me && r.owner === me.key; })
+      .sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);});
+    $("my-cnt").textContent = mine.length ? "("+mine.length+")" : "";
+    var el = $("my-list");
+    if(!mine.length){ el.innerHTML = '<div class="empty">لم ترسل أي بلاغ بعد</div>'; return; }
+    var MSG = {new:"📨 تم استلام بلاغك وبانتظار الفني", prog:"🔧 الفني يعمل على بلاغك الآن", done:"✅ تم حل البلاغ", unsolved:"⚠️ تعذّر على الفني حل البلاغ"};
+    el.innerHTML = mine.map(function(r){
+      var hall = r.hall || [r.building, r.room].filter(Boolean).join(" — ");
+      var loc = [r.dept ? "قسم "+r.dept : "", hall ? "قاعة "+hall : ""].filter(Boolean).map(esc).join(" — ");
+      return '<div class="card">'+
+        '<div class="top"><div><div class="loc">📍 '+(loc||"بدون موقع")+'</div>'+
+        '<div class="pc">مكان الجهاز: '+esc(r.pc||"غير محدد")+'</div></div>'+
+        '<span class="badge s-'+esc(r.status)+'">'+esc(STATUS[r.status]||r.status)+'</span></div>'+
+        '<div><span class="type">'+esc(r.type)+'</span>'+(r.prio==="urgent"?'<span class="urgent">🔴 عاجل</span>':'')+'</div>'+
+        (r.desc?'<div class="desc">'+esc(r.desc)+'</div>':'')+
+        '<div class="meta">أُرسل: '+esc(fmt(r.createdAt))+'</div>'+
+        '<div class="stline '+esc(r.status)+'">'+esc(MSG[r.status]||"")+'</div>'+
+        (r.fixNote ? '<div class="fixnote">ملاحظة الفني: '+esc(r.fixNote)+'</div>' : '')+
+        (r.status==="done" && r.resolvedAt ? '<div class="meta" style="margin-top:6px">تاريخ الحل: '+esc(fmt(r.resolvedAt))+'</div>' : '')+
+        '</div>';
+    }).join("");
+  }
+
+  // ---------- fix program ----------
+  $("filters").onclick = function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    filter = b.dataset.f;
+    Array.prototype.forEach.call($("filters").children, function(x){x.classList.toggle("on", x===b);});
+    render();
+  };
+  $("rfilters").onclick = function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    rfilter = b.dataset.r;
+    Array.prototype.forEach.call($("rfilters").children, function(x){x.classList.toggle("on", x===b);});
+    render();
+  };
+  $("search").oninput = render;
+
+  function fmt(ts){ try{ return new Date(ts).toLocaleString("ar-SA",{dateStyle:"medium",timeStyle:"short"}); }catch(e){ return ""; } }
+
+  function render(){
+    renderMine();
+    if(!isStaff || !(me && me.admin)) return;
+    var n = {new:0,prog:0,done:0,unsolved:0};
+    reports.forEach(function(r){ if(n[r.status]!=null) n[r.status]++; });
+    $("n-new").textContent = n.new; $("n-prog").textContent = n.prog; $("n-done").textContent = n.done; $("n-unsolved").textContent = n.unsolved;
+
+    var active = document.activeElement;
+    if(active && active.classList && active.classList.contains("notein")) return; // don't wipe a note being typed
+
+    var q = $("search").value.trim().toLowerCase();
+    var rows = reports.slice().sort(function(a,b){
+      var ua = a.prio==="urgent" && a.status!=="done" ? 1 : 0, ub = b.prio==="urgent" && b.status!=="done" ? 1 : 0;
+      if(ua!==ub) return ub-ua;
+      return (b.createdAt||0)-(a.createdAt||0);
+    }).filter(function(r){
+      if(filter!=="all" && r.status!==filter) return false;
+      if(rfilter!=="all" && r.dev!==rfilter) return false;
+      if(!q) return true;
+      return [r.dept,r.hall,r.building,r.room,r.pc,r.type,r.desc,r.reporter,r.fixNote].join(" ").toLowerCase().indexOf(q)>-1;
+    });
+
+    var el = $("list");
+    if(!rows.length){ el.innerHTML = '<div class="empty">لا توجد بلاغات</div>'; return; }
+    el.innerHTML = rows.map(function(r){
+      var hall = r.hall || [r.building, r.room].filter(Boolean).join(" — ");
+      var loc = [r.dept ? "قسم "+r.dept : "", hall ? "قاعة "+hall : ""].filter(Boolean).map(esc).join(" — ");
+      var isS = r.dev==="student";
+      return '<div class="card" data-id="'+esc(r.id)+'">'+
+        '<div class="top"><div><div class="loc">📍 '+(loc||"بدون موقع")+'</div>'+
+        '<div class="pc">مكان الجهاز: '+esc(r.pc||"غير محدد")+'</div></div>'+
+        '<span class="badge s-'+esc(r.status)+'">'+esc(STATUS[r.status]||r.status)+'</span></div>'+
+        '<div>'+(r.dev?'<span class="who '+(isS?'s':'t')+'">'+(isS?'🎓 طالب':'👨‍🏫 مدرس')+'</span>':'')+
+        '<span class="type">'+esc(r.type)+'</span>'+(r.prio==="urgent"?'<span class="urgent">🔴 عاجل</span>':'')+'</div>'+
+        (r.desc?'<div class="desc">'+esc(r.desc)+'</div>':'')+
+        '<div class="meta">'+esc(r.reporter||"مجهول")+' · '+esc(fmt(r.createdAt))+'</div>'+
+        (r.status==="done" && r.fixNote ? '<div class="fixnote">✔ '+esc(r.fixNote)+(r.resolvedAt?'<div class="meta">'+esc(fmt(r.resolvedAt))+'</div>':'')+'</div>' :
+         r.status==="done" && r.resolvedAt ? '<div class="meta" style="margin-top:6px">تم الحل: '+esc(fmt(r.resolvedAt))+'</div>' : '')+
+        (r.status==="unsolved" ? '<div class="stline unsolved">⚠️ تعذّر حل البلاغ</div>' : '')+
+        (r.status!=="done" ? '<textarea class="notein" placeholder="ملاحظات الفني / ما تم عمله (مطلوبة عند تعذّر الحل)">'+esc(r.fixNote||"")+'</textarea>' : '')+
+        '<div class="acts">'+
+          (r.status==="new"||r.status==="unsolved"?'<button data-a="prog">'+(r.status==="unsolved"?'إعادة المعالجة':'بدء المعالجة')+'</button>':'')+
+          (r.status!=="done"?'<button class="go" data-a="done">تم الحل ✓</button>':'')+
+          (r.status==="new"||r.status==="prog"?'<button class="bad" data-a="unsolved">تعذّر الحل ✗</button>':'')+
+          (r.status==="done"||r.status==="unsolved"?'<button data-a="new">إعادة فتح</button>':'')+
+          '<button class="del" data-a="del">حذف</button>'+
+        '</div></div>';
+    }).join("");
+  }
+
+  $("list").onclick = function(e){
+    var b = e.target.closest("button[data-a]"); if(!b) return;
+    var card = b.closest(".card"), id = card.dataset.id, a = b.dataset.a;
+    var noteEl = card.querySelector(".notein");
+    var note = noteEl ? noteEl.value.trim() : undefined;
+    if(a==="del"){
+      if(!b.classList.contains("sure")){
+        b.classList.add("sure"); b.textContent = "اضغط للتأكيد";
+        setTimeout(function(){ b.classList.remove("sure"); b.textContent = "حذف"; }, 3000);
+      }else removeReport(id);
+    }else if(a==="done"){
+      var p = {status:"done", resolvedAt:Date.now(), updatedAt:Date.now()};
+      if(note) p.fixNote = note;
+      updateReport(id, p);
+    }else if(a==="unsolved"){
+      if(!note){
+        if(noteEl){ noteEl.style.borderColor = "var(--danger)"; noteEl.placeholder = "اكتب سبب تعذّر الحل أولًا"; noteEl.focus(); }
+        return;
+      }
+      updateReport(id, {status:"unsolved", fixNote:note, updatedAt:Date.now()});
+    }else if(a==="prog"){
+      var p2 = {status:"prog", updatedAt:Date.now()};
+      if(note) p2.fixNote = note;
+      updateReport(id, p2);
+    }else{
+      updateReport(id, {status:"new", updatedAt:Date.now()});
+    }
+  };
+  $("list").addEventListener("focusout", function(e){
+    if(!e.target.classList || !e.target.classList.contains("notein")) return;
+    var card = e.target.closest(".card"), id = card.dataset.id;
+    var r = reports.filter(function(x){return x.id===id;})[0];
+    var v = e.target.value.trim();
+    if(r && (r.fixNote||"") !== v) updateReport(id, {fixNote:v});
+  });
+
+  // ---------- accounts & login ----------
+  var AC_KEY = "pc_accounts_v1", SS_KEY = "pc_session_v1";
+  var unsub = null, failCount = 0, lockUntil = 0, readyRes, readyP = new Promise(function(r){ readyRes = r; });
+  function ready(){ readyRes(); }
+
+  async function sha(str){
+    try{
+      if(window.crypto && crypto.subtle){
+        var b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+        return Array.prototype.map.call(new Uint8Array(b), function(x){ return ("0"+x.toString(16)).slice(-2); }).join("");
+      }
+    }catch(e){}
+    var h = 5381; for(var i=0;i<str.length;i++){ h = ((h<<5)+h+str.charCodeAt(i))|0; }
+    return "f" + (h>>>0).toString(16) + str.length.toString(16);
+  }
+  function normName(n){
+    return String(n||"").trim().replace(/\s+/g," ").toLowerCase()
+      .replace(/[\u064B-\u0652\u0640]/g,"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي");
+  }
+  async function keyOf(name){ return "u" + (await sha("name:" + normName(name))).slice(0,28); }
+
+  function lsAcc(){ try{ return JSON.parse(localStorage.getItem(AC_KEY)||"{}") || {}; }catch(e){ return {}; } }
+  async function getAcc(key){
+    if(accStore){ var d = await accStore.doc(key).get(); return d.exists ? d.data() : null; }
+    return lsAcc()[key] || null;
+  }
+  async function setAcc(key, obj){
+    if(accStore){ await accStore.doc(key).set(obj); }
+    else{ var m = lsAcc(); m[key] = obj; try{ localStorage.setItem(AC_KEY, JSON.stringify(m)); }catch(e){} }
+  }
+
+  function subscribeReports(){
+    if(unsub){ try{ unsub(); }catch(e){} unsub = null; }
+    reports = [];
+    if(!store){ reports = lsLoad(); render(); return; }
+    // staff load everything; everyone else loads only their own reports
+    var q = (me && me.admin) ? store : store.where("owner", "==", me ? me.key : "none");
+    unsub = q.onSnapshot(function(snap){
+      reports = snap.docs.map(function(d){ var o = d.data()||{}; o.id = o.id || d.id; return o; });
+      render();
+    }, function(err){
+      console.error(err);
+      store = null; accStore = null; reports = lsLoad(); render();
+      setMode("⚠️ الحفظ على هذا الجهاز فقط");
+    });
+  }
+
+  function enter(acc){
+    me = acc;
+    try{ sessionStorage.setItem(SS_KEY, JSON.stringify({key:acc.key,name:acc.name,admin:!!acc.admin})); }catch(e){}
+    $("login").style.display = "none";
+    $("userbar").style.display = "flex";
+    $("ub-name").textContent = acc.admin ? "المسؤول (الدعم الفني)" : acc.name;
+    ["t-name","s-name"].forEach(function(id){ $(id).value = acc.admin ? "" : acc.name; $(id).readOnly = !acc.admin; });
+    subscribeReports();
+    if(isStaff && acc.admin){
+      $("modes").style.display = "flex";
+      setProgram("fix");
+    }else{
+      $("modes").style.display = "none";
+      setProgram("report");
+    }
+    showR("home");
+    render();
+  }
+
+  function logout(){
+    me = null; reports = [];
+    if(unsub){ try{ unsub(); }catch(e){} unsub = null; }
+    try{ sessionStorage.removeItem(SS_KEY); }catch(e){}
+    $("userbar").style.display = "none";
+    $("modes").style.display = "none";
+    $("login").style.display = "flex";
+    $("lg-name").value = "";
+    $("lg-err").style.display = "none";
+    renderMine();
+    window.scrollTo(0,0);
+  }
+  $("ub-out").onclick = logout;
+
+  function lgErr(t){ var el = $("lg-err"); el.textContent = t; el.style.display = "block"; }
+
+  $("lg-go").onclick = async function(){
+    var btn = $("lg-go");
+    $("lg-err").style.display = "none";
+    var name = $("lg-name").value.trim().replace(/\s+/g," ");
+    var parts = name.split(" ").filter(function(x){ return x.length >= 2; });
+    if(parts.length < 2){ lgErr("اكتب اسمك الثنائي: الاسم الأول واسم العائلة"); return; }
+    if(parts.length > 4){ lgErr("اكتب اسمك الثنائي فقط"); return; }
+    name = parts.join(" ");
+    btn.disabled = true;
+    try{
+      await readyP;
+      var key = await keyOf(name);
+      var acc = await getAcc(key);
+      if(!acc){ acc = { name: name, createdAt: Date.now() }; await setAcc(key, acc); }
+      enter({ key: key, name: acc.name || name });
+    }catch(e){
+      console.error(e);
+      lgErr("تعذّر تسجيل الدخول، حاول مرة أخرى");
+    }
+    btn.disabled = false;
+  };
+  $("lg-name").addEventListener("keydown", function(e){ if(e.key==="Enter") $("lg-go").click(); });
+
+  $("lg-admin").onclick = function(){ if(isStaff) enter({ key: "__admin", name: "المسؤول", admin: true }); };
+
+  // ---------- init ----------
+  reports = lsLoad();
+  function setMode(t){ $("mode1").textContent = t; $("mode2").textContent = t; }
+  setMode("⏳ جارٍ الاتصال...");
+
+  (async function(){
+    // who is viewing? staff (owner) gets the resolving program
+    try{
+      var user = window.claude ? await window.claude.use("user") : null;
+      if(!window.claude) isStaff = true;                       // plain browser preview
+      else if(user) isStaff = !!user.isOwner();
+      if(user && user.id){ try{ myId = (await user.id()) || ""; }catch(e){} }
+    }catch(e){ isStaff = false; }
+    if(isStaff) $("lg-admin").style.display = "block";
+
+    var db = null;
+    try{ db = window.claude && await window.claude.use("db"); }catch(e){ db = null; }
+    if(db){
+      store = db.collection("reports");
+      accStore = db.collection("accounts");
+      reports = [];
+      setMode(isStaff ? "🔄 البلاغات مشتركة ومحدّثة مباشرة" : "");
+    }else{
+      setMode("⚠️ الحفظ على هذا الجهاز فقط");
+    }
+    ready();
+    // restore this tab's session (cleared when the tab is closed)
+    try{
+      var ss = JSON.parse(sessionStorage.getItem(SS_KEY)||"null");
+      if(ss && ss.key){
+        if(ss.admin && !isStaff){ /* not allowed */ }
+        else enter({ key: ss.key, name: ss.name, admin: !!ss.admin });
+      }
+    }catch(e){}
+  })();
+})();
+</script>
+<script>
+(function(){
+  var sp = document.getElementById("splash");
+  if(!sp) return;
+  var done = false;
+  function close(){
+    if(done) return; done = true;
+    sp.classList.add("hide");
+    setTimeout(function(){ if(sp.parentNode) sp.parentNode.removeChild(sp); }, 900);
+  }
+  sp.addEventListener("click", close);
+  var reduce = false;
+  try{ reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){}
+  setTimeout(close, reduce ? 1500 : 3600);
+})();
+</script>
+<script>
+(function(){
+  var KEY = "pc_theme", root = document.documentElement;
+  function apply(t){
+    root.setAttribute("data-theme", t);
+    Array.prototype.forEach.call(document.querySelectorAll(".tbtn"), function(b){ b.textContent = t === "dark" ? "☀️" : "🌙"; });
+    try{ localStorage.setItem(KEY, t); }catch(e){}
+  }
+  var t = "light";
+  try{ t = localStorage.getItem(KEY) === "dark" ? "dark" : "light"; }catch(e){}
+  apply(t);
+  Array.prototype.forEach.call(document.querySelectorAll(".tbtn"), function(b){
+    b.onclick = function(){ apply(root.getAttribute("data-theme") === "dark" ? "light" : "dark"); };
+  });
+})();
+</script>
+</body>
+</html>
